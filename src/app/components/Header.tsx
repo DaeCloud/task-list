@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog } from "@headlessui/react";
 import { Editor } from "@tinymce/tinymce-react";
 // import { useTasks } from "./TaskContext";
@@ -11,6 +11,21 @@ export default function Header() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tinymceApiKey, setTinymceApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const res = await fetch("/api/tinymce");
+        const key = await res.text();
+        setTinymceApiKey(key);
+      } catch (err) {
+        console.error("Failed to fetch TinyMCE API key", err);
+      }
+    };
+
+    fetchApiKey();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +92,7 @@ export default function Header() {
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <Editor
-                  apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
+                  apiKey={tinymceApiKey || process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
                   value={description}
                   onEditorChange={(content) => setDescription(content)}
                   init={{
