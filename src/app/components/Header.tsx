@@ -77,7 +77,7 @@ export default function Header() {
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <Editor
-                  apiKey="zql5yod7v9u8i72dr0ragusvlmctgp7vsa2hie32wze85wpv" // optional: add TinyMCE cloud API key if you want
+                  apiKey={process.env.NEXT_PUBLIC_TINYMCE_API_KEY}
                   value={description}
                   onEditorChange={(content) => setDescription(content)}
                   init={{
@@ -115,3 +115,4 @@ export default function Header() {
     </>
   );
 }
+
