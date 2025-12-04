@@ -6,12 +6,15 @@ import { Editor } from "@tinymce/tinymce-react";
 // import { useTasks } from "./TaskContext";
 
 export default function Header() {
-//   const { addTask } = useTasks();
+  //   const { addTask } = useTasks();
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [tinymceApiKey, setTinymceApiKey] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchApiKey = async () => {
@@ -59,12 +62,45 @@ export default function Header() {
       {/* Top bar */}
       <header className="bg-gray-900 text-white flex justify-between items-center px-6 py-4 shadow">
         <h1 className="text-xl font-bold">Task App</h1>
-        <button
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
-          onClick={() => setIsOpen(true)}
-        >
-          Create Task
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded hover:cursor-pointer"
+            onClick={() => setIsOpen(true)}
+          >
+            Create Task
+          </button>
+          <button
+            className="border-2 border-blue-600 hover:bg-blue-700 px-4 py-2 rounded hover:cursor-pointer"
+            onClick={() => {
+              const html = document.getElementById("main-content")?.outerHTML || "<div></div>";
+
+              fetch("/api/generate-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ input_html: html }),
+              })
+                .then(async (res) => {
+                  if (!res.ok) {
+                    alert("Failed to generate image");
+                    return;
+                  }
+
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+
+                  setImageUrl(url);
+                  setOpen(true);
+                })
+                .catch((err) => {
+                  console.error(err);
+                  alert("Error generating image");
+                });
+            }}
+
+          >
+            Export Image
+          </button>
+        </div>
       </header>
 
       {/* Modal */}
@@ -127,6 +163,56 @@ export default function Header() {
           </div>
         </div>
       </Dialog>
+
+      <Dialog open={open} onClose={() => {
+        setOpen(false);
+
+        if (imageUrl) {
+          URL.revokeObjectURL(imageUrl);
+          setImageUrl(null);
+        }
+      }} className="relative z-50">
+
+        {/* Background overlay */}
+        <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+
+        {/* Modal wrapper */}
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="bg-white dark:bg-gray-900 p-4 rounded-xl shadow-xl max-w-[90vw] max-h-[90vh] overflow-auto">
+
+            <Dialog.Title className="text-lg font-semibold mb-3">
+              Generated Image Preview
+            </Dialog.Title>
+
+            {imageUrl ? (
+              <img
+                src={imageUrl}
+                alt="Generated"
+                className="max-w-full max-h-[75vh] rounded border border-gray-200 dark:border-gray-700"
+              />
+            ) : (
+              <p className="text-center text-gray-500">Loading...</p>
+            )}
+
+            <div className="mt-4 flex justify-end">
+              <button
+                className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700"
+                onClick={() => {
+                  setOpen(false);
+                  if (imageUrl) {
+                    URL.revokeObjectURL(imageUrl);
+                    setImageUrl(null);
+                  }
+                }}
+              >
+                Close
+              </button>
+            </div>
+
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+
     </>
   );
 }
