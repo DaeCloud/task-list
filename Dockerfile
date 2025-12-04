@@ -35,7 +35,6 @@ COPY --from=builder /app/public ./public
 
 # Copy app/pages directories if they exist (required for Next 13 app dir)
 COPY --from=builder /app/app ./app
-COPY --from=builder /app/pages ./pages
 COPY --from=builder /app/next.config.js ./  # copy next.config.js if exists
 
 # Expose port
